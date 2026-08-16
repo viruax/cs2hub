@@ -1,633 +1,272 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CS2 Hub — Новости, матчи, рейтинги</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg: #0a0a12;
-            --card: #141420;
-            --card-hover: #1a1a2e;
-            --accent: #ff4757;
-            --accent2: #ffa502;
-            --accent3: #2ed573;
-            --text: #e8e8e8;
-            --muted: #6c6c8a;
-            --border: rgba(255,255,255,0.06);
-        }
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            line-height: 1.5;
-        }
-        nav {
-            background: rgba(10,10,18,0.95);
-            backdrop-filter: blur(20px);
-            padding: 0 25px;
-            display: flex;
-            gap: 3px;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            height: 58px;
-            overflow-x: auto;
-        }
-        nav .logo {
-            font-size: 1.25em;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--accent), var(--accent2));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-right: 25px;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        nav a {
-            color: var(--muted);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.9em;
-            cursor: pointer;
-            transition: all 0.2s;
-            padding: 8px 14px;
-            border-radius: 8px;
-            position: relative;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-        nav a:hover { color: var(--text); background: rgba(255,255,255,0.03); }
-        nav a.active { color: var(--text); }
-        nav a.active::after {
-            content: '';
-            position: absolute;
-            bottom: -14px;
-            left: 14px; right: 14px;
-            height: 2px;
-            background: linear-gradient(90deg, var(--accent), var(--accent2));
-            border-radius: 2px;
-        }
-        .container { max-width: 1050px; margin: 0 auto; padding: 25px 18px; }
-
-        .hero {
-            text-align: center;
-            padding: 40px 20px;
-            background: linear-gradient(135deg, rgba(255,71,87,0.08), rgba(255,165,2,0.08));
-            border-radius: 18px;
-            margin-bottom: 22px;
-            border: 1px solid var(--border);
-            position: relative;
-            overflow: hidden;
-        }
-        .hero h1 { font-size: 2.4em; margin-bottom: 8px; font-weight: 700; }
-        .hero p { color: var(--muted); font-size: 1.05em; }
-        .hero .update-time { color: #555; font-size: 0.8em; margin-top: 12px; }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-bottom: 25px;
-        }
-        .stat-card {
-            background: var(--card);
-            padding: 18px 10px;
-            border-radius: 12px;
-            text-align: center;
-            border: 1px solid var(--border);
-            transition: all 0.2s;
-        }
-        .stat-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.1); }
-        .stat-card .num { font-size: 1.9em; font-weight: 800; background: linear-gradient(135deg, var(--accent2), #ff7675); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .stat-card .lbl { color: var(--muted); font-size: 0.78em; margin-top: 3px; }
-
-        .section-title {
-            font-size: 1.2em;
-            font-weight: 600;
-            margin: 28px 0 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #fff;
-        }
-        .section-title::before {
-            content: '';
-            width: 4px; height: 20px;
-            background: linear-gradient(180deg, var(--accent), var(--accent2));
-            border-radius: 2px;
-        }
-
-        /* Рейтинги */
-        .ranking-table {
-            background: var(--card);
-            border-radius: 14px;
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-        .ranking-row {
-            display: grid;
-            grid-template-columns: 45px 1fr 80px 60px;
-            gap: 10px;
-            align-items: center;
-            padding: 12px 18px;
-            border-bottom: 1px solid var(--border);
-            transition: background 0.15s;
-        }
-        .ranking-row:last-child { border-bottom: none; }
-        .ranking-row:hover { background: rgba(255,255,255,0.02); }
-        .ranking-row.header {
-            background: rgba(255,255,255,0.02);
-            font-size: 0.75em;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--muted);
-            padding: 10px 18px;
-        }
-        .rank-num {
-            font-size: 1.1em;
-            font-weight: 800;
-            color: var(--accent2);
-            text-align: center;
-        }
-        .rank-team {
-            font-weight: 600;
-            font-size: 0.95em;
-        }
-        .rank-team .players {
-            font-size: 0.75em;
-            color: #555;
-            margin-top: 2px;
-            font-weight: 400;
-        }
-        .rank-points {
-            text-align: right;
-            font-weight: 700;
-            color: var(--accent);
-            font-size: 0.9em;
-        }
-        .rank-change {
-            text-align: right;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
-        .rank-change.up { color: var(--accent3); }
-        .rank-change.down { color: var(--accent); }
-        .rank-change.same { color: #555; }
-        .rank-region {
-            display: inline-block;
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-size: 0.65em;
-            font-weight: 700;
-            margin-left: 6px;
-            text-transform: uppercase;
-        }
-        .region-eu { background: rgba(52,152,219,0.15); color: #3498db; }
-        .region-am { background: rgba(46,213,115,0.15); color: #2ed573; }
-        .region-as { background: rgba(241,196,15,0.15); color: #f1c40f; }
-
-        /* Турниры */
-        .tournament-card {
-            background: var(--card);
-            border-radius: 14px;
-            padding: 16px 18px;
-            border: 1px solid var(--border);
-            margin-bottom: 10px;
-            transition: all 0.2s;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 12px;
-            align-items: center;
-            text-decoration: none;
-            color: inherit;
-        }
-        .tournament-card:hover {
-            background: var(--card-hover);
-            border-color: rgba(255,255,255,0.12);
-            transform: translateX(4px);
-        }
-        .tournament-card .name {
-            font-weight: 600;
-            font-size: 1em;
-            margin-bottom: 4px;
-        }
-        .tournament-card .meta {
-            color: var(--muted);
-            font-size: 0.82em;
-            display: flex;
-            gap: 14px;
-            flex-wrap: wrap;
-        }
-        .tournament-card .meta span { display: flex; align-items: center; gap: 4px; }
-        .tournament-card .status {
-            font-size: 0.8em;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 20px;
-            white-space: nowrap;
-        }
-        .status-live { background: rgba(231,76,60,0.15); color: #e74c3c; }
-        .status-soon { background: rgba(255,165,2,0.15); color: #ffa502; }
-        .status-confirmed { background: rgba(46,213,115,0.15); color: #2ed573; }
-        .tournament-card .prize {
-            font-size: 0.85em;
-            font-weight: 700;
-            color: var(--accent2);
-            margin-top: 4px;
-        }
-
-        /* Новости */
-        .news-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-        .news-card {
-            background: var(--card);
-            border-radius: 14px;
-            padding: 16px;
-            border: 1px solid var(--border);
-            transition: all 0.2s;
-            text-decoration: none;
-            color: inherit;
-            display: block;
-        }
-        .news-card:hover {
-            background: var(--card-hover);
-            border-color: rgba(255,255,255,0.12);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-        }
-        .news-card .badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 0.65em;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-        .badge-patch { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
-        .badge-news { background: linear-gradient(135deg, #3498db, #2980b9); color: white; }
-        .news-card h3 { font-size: 1em; font-weight: 600; margin-bottom: 6px; line-height: 1.3; color: #fff; }
-        .news-card .meta { color: var(--muted); font-size: 0.75em; margin-bottom: 8px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .news-card .desc { color: #999; font-size: 0.85em; line-height: 1.5; }
-
-        /* Матчи */
-        .match-row {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            gap: 12px;
-            align-items: center;
-            background: var(--card);
-            padding: 14px 20px;
-            border-radius: 12px;
-            margin-bottom: 8px;
-            border: 1px solid var(--border);
-            transition: all 0.2s;
-            text-decoration: none;
-            color: inherit;
-        }
-        .match-row:hover { background: var(--card-hover); border-color: rgba(255,255,255,0.1); }
-        .match-row .team { font-weight: 600; font-size: 0.95em; }
-        .match-row .team.winner { color: var(--accent2); }
-        .match-row .vs {
-            text-align: center;
-            font-size: 1.2em;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--accent), var(--accent2));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .match-row .event { color: var(--muted); font-size: 0.75em; text-align: center; margin-top: 2px; }
-        .match-row .maps { color: #555; font-size: 0.72em; text-align: center; margin-top: 3px; }
-
-        .tab-content { display: none; animation: fadeIn 0.25s ease-out; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-        .two-col {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 18px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: var(--muted);
-        }
-        .empty-state .emoji { font-size: 2.5em; margin-bottom: 10px; display: block; }
-
-        footer {
-            text-align: center;
-            padding: 30px 20px;
-            color: #444;
-            font-size: 0.8em;
-            border-top: 1px solid var(--border);
-            margin-top: 35px;
-        }
-
-        @media (max-width: 768px) {
-            .hero h1 { font-size: 1.7em; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .news-grid { grid-template-columns: 1fr; }
-            .two-col { grid-template-columns: 1fr; }
-            .match-row { grid-template-columns: 1fr; text-align: center; gap: 5px; padding: 12px; }
-            .ranking-row { grid-template-columns: 35px 1fr 70px 50px; padding: 10px 12px; }
-            .tournament-card { grid-template-columns: 1fr; }
-            nav { padding: 0 12px; }
-            nav .logo { margin-right: 10px; font-size: 1.1em; }
-            nav a { padding: 6px 10px; font-size: 0.82em; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS2 Hub</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a12;color:#e8e8e8;min-height:100vh;line-height:1.5}
+nav{background:rgba(10,10,18,0.95);backdrop-filter:blur(20px);padding:0 20px;display:flex;gap:3px;align-items:center;border-bottom:1px solid rgba(255,255,255,0.06);position:sticky;top:0;z-index:100;height:56px;overflow-x:auto}
+nav .logo{font-size:1.2em;font-weight:800;background:linear-gradient(135deg,#ff4757,#ffa502);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-right:20px;white-space:nowrap}
+nav a{color:#6c6c8a;text-decoration:none;font-weight:500;font-size:0.88em;cursor:pointer;transition:all 0.2s;padding:8px 14px;border-radius:8px;position:relative;white-space:nowrap;flex-shrink:0}
+nav a:hover{color:#e8e8e8;background:rgba(255,255,255,0.03)}
+nav a.active{color:#e8e8e8}
+nav a.active::after{content:'';position:absolute;bottom:-14px;left:14px;right:14px;height:2px;background:linear-gradient(90deg,#ff4757,#ffa502);border-radius:2px}
+.container{max-width:1000px;margin:0 auto;padding:20px 16px}
+.hero{text-align:center;padding:35px 20px;background:linear-gradient(135deg,rgba(255,71,87,0.08),rgba(254,202,87,0.08));border-radius:16px;margin-bottom:20px;border:1px solid rgba(255,255,255,0.06)}
+.hero h1{font-size:2.2em;margin-bottom:8px;font-weight:700}
+.hero p{color:#6c6c8a;font-size:1em}
+.hero .update-time{color:#555;font-size:0.78em;margin-top:10px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px}
+.stat-card{background:#141420;padding:16px 10px;border-radius:12px;text-align:center;border:1px solid rgba(255,255,255,0.06)}
+.stat-card .num{font-size:1.8em;font-weight:800;background:linear-gradient(135deg,#ffa502,#ff7675);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-card .lbl{color:#6c6c8a;font-size:0.75em;margin-top:3px}
+.section-title{font-size:1.15em;font-weight:600;margin:24px 0 10px;display:flex;align-items:center;gap:8px;color:#fff}
+.section-title::before{content:'';width:4px;height:20px;background:linear-gradient(180deg,#ff4757,#ffa502);border-radius:2px}
+.ranking-table{background:#141420;border-radius:12px;border:1px solid rgba(255,255,255,0.06);overflow:hidden}
+.ranking-row{display:grid;grid-template-columns:40px 1fr 70px 50px;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.04)}
+.ranking-row:last-child{border-bottom:none}
+.ranking-row.header{background:rgba(255,255,255,0.02);font-size:0.72em;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c6c8a;padding:8px 14px}
+.rank-num{font-size:1em;font-weight:800;color:#ffa502;text-align:center}
+.rank-team{font-weight:600;font-size:0.9em}
+.rank-team .players{font-size:0.72em;color:#555;margin-top:2px;font-weight:400}
+.rank-points{text-align:right;font-weight:700;color:#ff4757;font-size:0.85em}
+.rank-change{text-align:right;font-size:0.8em;font-weight:600}
+.rank-change.up{color:#2ed573}
+.rank-change.down{color:#ff4757}
+.rank-change.same{color:#555}
+.rank-region{display:inline-block;padding:1px 5px;border-radius:4px;font-size:0.6em;font-weight:700;margin-left:5px;text-transform:uppercase}
+.region-eu{background:rgba(52,152,219,0.15);color:#3498db}
+.region-am{background:rgba(46,213,115,0.15);color:#2ed573}
+.tournament-card{background:#141420;border-radius:12px;padding:14px 16px;border:1px solid rgba(255,255,255,0.06);margin-bottom:8px;transition:all 0.2s;display:block;text-decoration:none;color:inherit}
+.tournament-card:hover{background:#1a1a2e;border-color:rgba(255,255,255,0.1);transform:translateX(3px)}
+.tournament-card .name{font-weight:600;font-size:0.95em;margin-bottom:3px}
+.tournament-card .meta{color:#6c6c8a;font-size:0.78em;display:flex;gap:12px;flex-wrap:wrap}
+.tournament-card .status{font-size:0.75em;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;display:inline-block;margin-top:6px}
+.status-live{background:rgba(231,76,60,0.15);color:#e74c3c}
+.status-soon{background:rgba(255,165,2,0.15);color:#ffa502}
+.status-confirmed{background:rgba(46,213,115,0.15);color:#2ed573}
+.tournament-card .prize{font-size:0.82em;font-weight:700;color:#ffa502;margin-top:4px}
+.news-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.news-card{background:#141420;border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.06);transition:all 0.2s;display:block;text-decoration:none;color:inherit}
+.news-card:hover{background:#1a1a2e;border-color:rgba(255,255,255,0.1);transform:translateY(-2px)}
+.news-card .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.62em;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+.badge-patch{background:linear-gradient(135deg,#e74c3c,#c0392b);color:white}
+.badge-news{background:linear-gradient(135deg,#3498db,#2980b9);color:white}
+.news-card h3{font-size:0.95em;font-weight:600;margin-bottom:5px;line-height:1.3;color:#fff}
+.news-card .meta{color:#6c6c8a;font-size:0.72em;margin-bottom:6px}
+.news-card .desc{color:#999;font-size:0.82em;line-height:1.5}
+.match-row{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;background:#141420;padding:12px 16px;border-radius:10px;margin-bottom:6px;border:1px solid rgba(255,255,255,0.06);transition:all 0.2s;text-decoration:none;color:inherit}
+.match-row:hover{background:#1a1a2e;border-color:rgba(255,255,255,0.1)}
+.match-row .team{font-weight:600;font-size:0.9em}
+.match-row .team.winner{color:#ffa502}
+.match-row .vs{text-align:center;font-size:1.1em;font-weight:800;background:linear-gradient(135deg,#ff4757,#ffa502);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.match-row .event{color:#6c6c8a;font-size:0.72em;text-align:center;margin-top:2px}
+.match-row .maps{color:#555;font-size:0.68em;text-align:center;margin-top:2px}
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeIn 0.25s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.empty-state{text-align:center;padding:30px;color:#6c6c8a}
+.empty-state .emoji{font-size:2em;margin-bottom:8px;display:block}
+footer{text-align:center;padding:25px 16px;color:#444;font-size:0.78em;border-top:1px solid rgba(255,255,255,0.06);margin-top:30px}
+@media(max-width:768px){.hero h1{font-size:1.6em}.stats-grid{grid-template-columns:repeat(2,1fr)}.news-grid{grid-template-columns:1fr}.two-col{grid-template-columns:1fr}.match-row{grid-template-columns:1fr;text-align:center;gap:4px;padding:10px}.ranking-row{grid-template-columns:30px 1fr 60px 45px;padding:8px 10px}nav{padding:0 10px}nav .logo{margin-right:8px;font-size:1em}nav a{padding:5px 8px;font-size:0.8em}}
+</style>
 </head>
 <body>
-    <nav>
-        <div class="logo">🎯 CS2 Hub</div>
-        <a onclick="showTab('home')" class="active" id="tab-home">Главная</a>
-        <a onclick="showTab('rankings')" id="tab-rankings">Рейтинги</a>
-        <a onclick="showTab('tournaments')" id="tab-tournaments">Турниры</a>
-        <a onclick="showTab('matches')" id="tab-matches">Матчи</a>
-        <a onclick="showTab('news')" id="tab-news">Новости</a>
-    </nav>
-
-    <div class="container">
-        <!-- HOME -->
-        <div id="content-home" class="tab-content active">
-            <div class="hero">
-                <h1>🎯 CS2 Hub</h1>
-                <p>Новости, матчи, рейтинги и турниры — всё в одном месте</p>
-                <div class="update-time">📅 Обновлено: 17.08.2026 06:19</div>
-            </div>
-
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="num">2</div>
-                    <div class="lbl">Обновлений</div>
-                </div>
-                <div class="stat-card">
-                    <div class="num">6</div>
-                    <div class="lbl">Матчей тир-1</div>
-                </div>
-                <div class="stat-card">
-                    <div class="num">9</div>
-                    <div class="lbl">Турниров</div>
-                </div>
-                <div class="stat-card">
-                    <div class="num">10</div>
-                    <div class="lbl">Команд в топе</div>
-                </div>
-            </div>
-
-            <div class="two-col">
-                <div>
-                    <div class="section-title">🏆 HLTV Top 5</div>
-                    <div class="ranking-table" id="home-hltv"></div>
-                </div>
-                <div>
-                    <div class="section-title">📊 VRS Top 5</div>
-                    <div class="ranking-table" id="home-vrs"></div>
-                </div>
-            </div>
-
-            <div class="section-title">🔥 Последние матчи</div>
-            <div id="home-matches"></div>
-
-            <div class="section-title">📅 Ближайшие турниры</div>
-            <div id="home-tournaments"></div>
-        </div>
-
-        <!-- RANKINGS -->
-        <div id="content-rankings" class="tab-content">
-            <div class="hero">
-                <h1>📊 Рейтинги команд</h1>
-                <p>HLTV World Ranking и Valve Regional Standings (VRS)</p>
-            </div>
-
-            <div class="two-col">
-                <div>
-                    <div class="section-title">🏆 HLTV World Ranking</div>
-                    <div class="ranking-table" id="all-hltv"></div>
-                </div>
-                <div>
-                    <div class="section-title">📊 VRS (Valve)</div>
-                    <div class="ranking-table" id="all-vrs"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- TOURNAMENTS -->
-        <div id="content-tournaments" class="tab-content">
-            <div class="hero">
-                <h1>📅 Предстоящие турниры</h1>
-                <p>Тир-1 и тир-2 события до конца 2026 года</p>
-            </div>
-            <div id="all-tournaments"></div>
-        </div>
-
-        <!-- MATCHES -->
-        <div id="content-matches" class="tab-content">
-            <div class="hero">
-                <h1>🏆 Матчи тир-1</h1>
-                <p>Результаты за последние 2 недели</p>
-            </div>
-            <div id="all-matches"></div>
-        </div>
-
-        <!-- NEWS -->
-        <div id="content-news" class="tab-content">
-            <div class="hero">
-                <h1>📰 Новости CS2</h1>
-                <p>Обновления игры и анонсы от Valve</p>
-            </div>
-            <div class="news-grid" id="all-news"></div>
-        </div>
-    </div>
-
-    <footer>
-        <p>CS2 Hub v2.0 | Данные: Steam API + CSAPI + HLTV + VRS</p>
-        <p style="margin-top:4px;">Обновляется ежедневно | Просто открой файл — всё работает!</p>
-    </footer>
-
+<nav><div class="logo">🎯 CS2 Hub</div><a onclick="showTab('home')" class="active" id="tab-home">Главная</a><a onclick="showTab('rankings')" id="tab-rankings">Рейтинги</a><a onclick="showTab('tournaments')" id="tab-tournaments">Турниры</a><a onclick="showTab('matches')" id="tab-matches">Матчи</a><a onclick="showTab('news')" id="tab-news">Новости</a></nav>
+<div class="container">
+<div id="content-home" class="tab-content active">
+<div class="hero"><h1>🎯 CS2 Hub</h1><p>Новости, матчи, рейтинги и турниры</p><div class="update-time">📅 Обновлено: 17.08.2026 07:15</div></div>
+<div class="stats-grid">
+<div class="stat-card"><div class="num">2</div><div class="lbl">Обновлений</div></div>
+<div class="stat-card"><div class="num">6</div><div class="lbl">Матчей тир-1</div></div>
+<div class="stat-card"><div class="num">9</div><div class="lbl">Турниров</div></div>
+<div class="stat-card"><div class="num">10</div><div class="lbl">Команд в топе</div></div>
+</div>
+<div class="two-col">
+<div><div class="section-title">🏆 HLTV Top 5</div><div class="ranking-table" id="home-hltv"></div></div>
+<div><div class="section-title">📊 VRS Top 5</div><div class="ranking-table" id="home-vrs"></div></div>
+</div>
+<div class="section-title">🔥 Последние матчи</div><div id="home-matches"></div>
+<div class="section-title">📅 Ближайшие турниры</div><div id="home-tournaments"></div>
+</div>
+<div id="content-rankings" class="tab-content">
+<div class="hero"><h1>📊 Рейтинги команд</h1><p>HLTV World Ranking и Valve Regional Standings</p></div>
+<div class="two-col">
+<div><div class="section-title">🏆 HLTV Top 10</div><div class="ranking-table" id="all-hltv"></div></div>
+<div><div class="section-title">📊 VRS Top 10</div><div class="ranking-table" id="all-vrs"></div></div>
+</div>
+</div>
+<div id="content-tournaments" class="tab-content">
+<div class="hero"><h1>📅 Предстоящие турниры</h1><p>Тир-1 события до конца 2026</p></div>
+<div id="all-tournaments"></div>
+</div>
+<div id="content-matches" class="tab-content">
+<div class="hero"><h1>🏆 Матчи тир-1</h1><p>Результаты за последние 2 недели</p></div>
+<div id="all-matches"></div>
+</div>
+<div id="content-news" class="tab-content">
+<div class="hero"><h1>📰 Новости CS2</h1><p>Обновления игры от Valve</p></div>
+<div class="news-grid" id="all-news"></div>
+</div>
+</div>
+<footer><p>CS2 Hub | Данные: Steam API + CSAPI + HLTV + VRS</p><p style="margin-top:4px">Обновлено: 17.08.2026 07:15</p></footer>
 <script>
-// ============ ДАННЫЕ ============
-const NEWS_DATA = [{"title": "Counter-Strike 2 Update", "date": "13.08.2026", "time": "06:50", "content": "FachwerkUpdated to the latest version from the Community Workshop (Update Notes)ShelterUpdated to the latest version from the Community Workshop (Update Notes)", "url": "https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1840944183775194", "author": "tomd", "isPatch": true}, {"title": "Counter-Strike 2 Update", "date": "04.08.2026", "time": "05:18", "content": "Fixed a case where grenades could be thrown through level geometryCacheFixed various gaps in mapFixed collision in various spots across mapFixed flickering on some assetsRemoved boost spot in Outside AShelterUpdated to the latest version from the Community Workshop (Update Notes)Added Instance.TracePlayerAdded Instance.OnWeaponPickupAdded Instance.OnBombExplodeAdded Instance.SpawnGrenadeProjectileAdded dropper to Instance.OnWeaponDrop eventAdded hitEntity to Instance.OnGrenadeBounce eventAdded n...", "url": "https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1839676055895877", "author": "jo", "isPatch": true}];
-const MATCHES_DATA = [{"team1": "Spirit", "team2": "BIG", "score1": 2, "score2": 1, "winner": "Spirit", "date": "15.08.2026", "event": "Esports World Cup 2026", "maps": "Mirage 13:7 | Dust2 13:10", "url": "https://www.hltv.org/matches/2396591/match"}, {"team1": "9z", "team2": "FURIA", "score1": 1, "score2": 2, "winner": "FURIA", "date": "15.08.2026", "event": "Esports World Cup 2026", "maps": "Nuke 6:13 | Dust2 6:13 | Mirage 16:13", "url": "https://www.hltv.org/matches/2396588/match"}, {"team1": "Natus Vincere", "team2": "The MongolZ", "score1": 2, "score2": 1, "winner": "Natus Vincere", "date": "15.08.2026", "event": "Esports World Cup 2026", "maps": "Ancient 9:13 | Inferno 13:5 | Mirage 13:8", "url": "https://www.hltv.org/matches/2396587/match"}, {"team1": "Aurora", "team2": "JiJieHao", "score1": 2, "score2": 0, "winner": "Aurora", "date": "15.08.2026", "event": "Esports World Cup 2026", "maps": "Mirage 13:6 | Anubis 13:4", "url": "https://www.hltv.org/matches/2396592/match"}, {"team1": "paiN", "team2": "Wildcard", "score1": 2, "score2": 1, "winner": "paiN", "date": "15.08.2026", "event": "Esports World Cup 2026", "maps": "Inferno 12:16 | Mirage 13:7 | Nuke 13:3", "url": "https://www.hltv.org/matches/2396590/match"}, {"team1": "MOUZ", "team2": "FUT", "score1": 1, "score2": 2, "winner": "FUT", "date": "14.08.2026", "event": "Esports World Cup 2026", "maps": "Nuke 16:12 | Ancient 6:13 | Mirage 11:13", "url": "https://www.hltv.org/matches/2396584/match"}];
-const HLTV_DATA = [{"rank": 1, "team": "Falcons", "points": 907, "players": ["karrigan", "NiKo", "TeSeS", "m0NESY", "kyousuke"], "change": 0}, {"rank": 2, "team": "Spirit", "points": 752, "players": ["sh1ro", "magixx", "tN1R", "zont1x", "donk"], "change": 0}, {"rank": 3, "team": "FURIA", "points": 646, "players": ["FalleN", "yuurih", "YEKINDAR", "KSCERATO", "molodoy"], "change": 0}, {"rank": 4, "team": "Vitality", "points": 626, "players": ["apEX", "ropz", "ZywOo", "flameZ", "mezii"], "change": 0}, {"rank": 5, "team": "MOUZ", "points": 574, "players": ["torzsi", "Spinx", "xertioN", "PR", "xelex"], "change": 0}, {"rank": 6, "team": "Natus Vincere", "points": 459, "players": ["Aleksib", "iM", "b1t", "w0nderful", "makazze"], "change": 0}, {"rank": 7, "team": "9z", "points": 363, "players": ["max", "dgt", "meyern", "luchov", "HUASOPEEK"], "change": 0}, {"rank": 8, "team": "Aurora", "points": 330, "players": ["XANTARES", "woxic", "Jimpphat", "kyxsan", "Wicadia"], "change": 0}, {"rank": 9, "team": "FaZe", "points": 328, "players": ["frozen", "Twistzz", "Neityu", "jcobbb", "JBOEN"], "change": 2}, {"rank": 10, "team": "G2", "points": 308, "players": ["huNter-", "NertZ", "r1nkle", "HeavyGod", "MATYS"], "change": -1}];
-const VRS_DATA = [{"rank": 1, "team": "Spirit", "points": 1993, "region": "EU", "change": 1}, {"rank": 2, "team": "Falcons", "points": 1988, "region": "EU", "change": 1}, {"rank": 3, "team": "Vitality", "points": 1908, "region": "EU", "change": -2}, {"rank": 4, "team": "NAVI", "points": 1837, "region": "EU", "change": 0}, {"rank": 5, "team": "FURIA", "points": 1797, "region": "AM", "change": 6}, {"rank": 6, "team": "MOUZ", "points": 1762, "region": "EU", "change": -1}, {"rank": 7, "team": "Legacy", "points": 1752, "region": "AM", "change": -1}, {"rank": 8, "team": "Aurora", "points": 1723, "region": "EU", "change": 0}, {"rank": 9, "team": "G2", "points": 1713, "region": "EU", "change": 4}, {"rank": 10, "team": "BetBoom", "points": 1705, "region": "EU", "change": 7}];
-const TOURNAMENTS_DATA = [{"name": "Esports World Cup 2026", "dates": "12–23 августа", "location": "Париж", "prize": "$2,000,000", "teams": 32, "status": "🔴 Идёт сейчас", "url": "https://esportsworldcup.com/en/competitions/2026/cs2"}, {"name": "BLAST Open Fall 2026", "dates": "26 августа – 6 сентября", "location": "Порту, Португалия", "prize": "$1,100,000", "teams": 16, "status": "⏳ Скоро", "url": "https://blast.tv/cs/tournaments"}, {"name": "StarLadder StarSeries S20", "dates": "~17–20 сентября", "location": "Вааса, Финляндия", "prize": "$500,000", "teams": 8, "status": "⏳ Скоро", "url": "https://liquipedia.net/counterstrike/StarLadder/StarSeries/Season_20"}, {"name": "ESL Pro League S24", "dates": "~3–11 октября", "location": "Катовице, Польша", "prize": "TBC", "teams": 16, "status": "⏳ Скоро", "url": "https://pro.eslgaming.com/csgo/proleague/"}, {"name": "Thunderpick World Championship", "dates": "~14–18 октября", "location": "TBC", "prize": "$1,250,000", "teams": 8, "status": "⏳ Скоро", "url": "https://thunderpick.com"}, {"name": "PGL Masters Bucharest 2026", "dates": "~24–31 октября", "location": "Бухарест, Румыния", "prize": "TBC", "teams": 16, "status": "⏳ Скоро", "url": "https://pgl.gg"}, {"name": "IEM Beijing 2026", "dates": "~2–8 ноября", "location": "Пекин, Китай", "prize": "TBC", "teams": 16, "status": "⏳ Скоро", "url": "https://intel.com/iem"}, {"name": "BLAST Rivals Fall 2026", "dates": "~9–15 ноября", "location": "Гонконг", "prize": "TBC", "teams": 16, "status": "⏳ Скоро", "url": "https://blast.tv"}, {"name": "PGL Major Singapore 2026", "dates": "25 ноября – 13 декабря", "location": "Сингапур", "prize": "$1,250,000", "teams": 32, "status": "✅ Подтверждён", "url": "https://pgl.gg"}];
+// ===== ДАННЫЕ =====
+var NEWS_DATA = [{"title": "Counter-Strike 2 Update", "date": "13.08.2026", "time": "06:50", "content": "FachwerkUpdated to the latest version from the Community Workshop (Update Notes)ShelterUpdated to the latest version from the Community Workshop (Update Notes)", "url": "https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1840944183775194", "author": "tomd", "isPatch": true}, {"title": "Counter-Strike 2 Update", "date": "04.08.2026", "time": "05:18", "content": "Fixed a case where grenades could be thrown through level geometryCacheFixed various gaps in mapFixed collision in various spots across mapFixed flickering on some assetsRemoved boost spot in Outside AShelterUpdated to the latest version from the Community Workshop (Update Notes)Added Instance.TracePlayerAdded Instance.OnWeaponPickupAdded Instance.OnBombExplodeAdded Instance.SpawnGrenadeProjectileAdded dropper to Instance.OnWeaponDrop eventAdded hitEntity to Instance.OnGrenadeBounce eventAdded n...", "url": "https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1839676055895877", "author": "jo", "isPatch": true}];
+var MATCHES_DATA = [{"team1": "Spirit", "team2": "BIG", "score1": 2, "score2": 1, "winner": "Spirit", "date": "15.08.2026", "event": "Esports World Cup 2026", "maps": "Mirage 13:7 | Dust2 13:10", "url": "https://www.hltv.org/matches/2396591/match"}, {"team1": "9z", "team2": "FURIA", "score1": 1, "score2": 2, "winner": "FURIA", "date": "15.08.2026", "event": "Esports World Cup 2026", "maps": "Nuke 6:13 | Dust2 6:13 | Mirage 16:13", "url": "https://www.hltv.org/matches/2396588/match"}, {"team1": "Natus Vincere", "team2": "The MongolZ", "score1": 2, "score2": 1, "winner": "Natus Vincere", "date": "15.08.2026", "event": "Esports World Cup 2026", "maps": "Ancient 9:13 | Inferno 13:5 | Mirage 13:8", "url": "https://www.hltv.org/matches/2396587/match"}, {"team1": "Aurora", "team2": "JiJieHao", "score1": 2, "score2": 0, "winner": "Aurora", "date": "15.08.2026", "event": "Esports World Cup 2026", "maps": "Mirage 13:6 | Anubis 13:4", "url": "https://www.hltv.org/matches/2396592/match"}, {"team1": "paiN", "team2": "Wildcard", "score1": 2, "score2": 1, "winner": "paiN", "date": "15.08.2026", "event": "Esports World Cup 2026", "maps": "Inferno 12:16 | Mirage 13:7 | Nuke 13:3", "url": "https://www.hltv.org/matches/2396590/match"}, {"team1": "MOUZ", "team2": "FUT", "score1": 1, "score2": 2, "winner": "FUT", "date": "14.08.2026", "event": "Esports World Cup 2026", "maps": "Nuke 16:12 | Ancient 6:13 | Mirage 11:13", "url": "https://www.hltv.org/matches/2396584/match"}];
 
-// ============ РЕНДЕР РЕЙТИНГОВ ============
-function renderRankingRow(item, type, isHeader = false) {
-    if (isHeader) {
-        return `
-            <div class="ranking-row header">
-                <div>#</div>
-                <div>Команда</div>
-                <div style="text-align:right">Очки</div>
-                <div style="text-align:right">Изм.</div>
-            </div>
-        `;
-    }
-    const changeIcon = item.change > 0 ? '↑' : item.change < 0 ? '↓' : '—';
-    const changeClass = item.change > 0 ? 'up' : item.change < 0 ? 'down' : 'same';
-    const changeText = item.change !== 0 ? Math.abs(item.change) : '';
-    const regionClass = item.region ? `region-${item.region.toLowerCase()}` : '';
-    const regionBadge = item.region ? `<span class="rank-region ${regionClass}">${item.region}</span>` : '';
-    const players = item.players ? `<div class="players">${item.players.join(', ')}</div>` : '';
+var HLTV_DATA = [
+  {"rank":1,"team":"Falcons","points":907,"players":["karrigan","NiKo","TeSeS","m0NESY","kyousuke"],"change":0},
+  {"rank":2,"team":"Spirit","points":752,"players":["sh1ro","magixx","tN1R","zont1x","donk"],"change":0},
+  {"rank":3,"team":"FURIA","points":646,"players":["FalleN","yuurih","YEKINDAR","KSCERATO","molodoy"],"change":0},
+  {"rank":4,"team":"Vitality","points":626,"players":["apEX","ropz","ZywOo","flameZ","mezii"],"change":0},
+  {"rank":5,"team":"MOUZ","points":574,"players":["torzsi","Spinx","xertioN","PR","xelex"],"change":0},
+  {"rank":6,"team":"Natus Vincere","points":459,"players":["Aleksib","iM","b1t","w0nderful","makazze"],"change":0},
+  {"rank":7,"team":"9z","points":363,"players":["max","dgt","meyern","luchov","HUASOPEEK"],"change":0},
+  {"rank":8,"team":"Aurora","points":330,"players":["XANTARES","woxic","Jimpphat","kyxsan","Wicadia"],"change":0},
+  {"rank":9,"team":"FaZe","points":328,"players":["frozen","Twistzz","Neityu","jcobbb","JBOEN"],"change":2},
+  {"rank":10,"team":"G2","points":308,"players":["huNter-","NertZ","r1nkle","HeavyGod","MATYS"],"change":-1}
+];
 
-    return `
-        <div class="ranking-row">
-            <div class="rank-num">${item.rank}</div>
-            <div class="rank-team">${item.team}${regionBadge}${players}</div>
-            <div class="rank-points">${item.points}</div>
-            <div class="rank-change ${changeClass}">${changeIcon}${changeText}</div>
-        </div>
-    `;
+var VRS_DATA = [
+  {"rank":1,"team":"Spirit","points":1993,"region":"EU","change":1},
+  {"rank":2,"team":"Falcons","points":1988,"region":"EU","change":1},
+  {"rank":3,"team":"Vitality","points":1908,"region":"EU","change":-2},
+  {"rank":4,"team":"NAVI","points":1837,"region":"EU","change":0},
+  {"rank":5,"team":"FURIA","points":1797,"region":"AM","change":6},
+  {"rank":6,"team":"MOUZ","points":1762,"region":"EU","change":-1},
+  {"rank":7,"team":"Legacy","points":1752,"region":"AM","change":-1},
+  {"rank":8,"team":"Aurora","points":1723,"region":"EU","change":0},
+  {"rank":9,"team":"G2","points":1713,"region":"EU","change":4},
+  {"rank":10,"team":"BetBoom","points":1705,"region":"EU","change":7}
+];
+
+var TOURNAMENTS_DATA = [
+  {"name":"Esports World Cup 2026","dates":"12–23 августа","location":"Париж","prize":"$2,000,000","teams":32,"status":"🔴 Идёт сейчас","url":"https://esportsworldcup.com/en/competitions/2026/cs2"},
+  {"name":"BLAST Open Fall 2026","dates":"26 августа – 6 сентября","location":"Порту, Португалия","prize":"$1,100,000","teams":16,"status":"⏳ Скоро","url":"https://blast.tv/cs/tournaments"},
+  {"name":"StarLadder StarSeries S20","dates":"~17–20 сентября","location":"Вааса, Финляндия","prize":"$500,000","teams":8,"status":"⏳ Скоро","url":"https://liquipedia.net/counterstrike/StarLadder/StarSeries/Season_20"},
+  {"name":"ESL Pro League S24","dates":"~3–11 октября","location":"Катовице, Польша","prize":"TBC","teams":16,"status":"⏳ Скоро","url":"https://pro.eslgaming.com/csgo/proleague/"},
+  {"name":"Thunderpick World Championship","dates":"~14–18 октября","location":"TBC","prize":"$1,250,000","teams":8,"status":"⏳ Скоро","url":"https://thunderpick.com"},
+  {"name":"PGL Masters Bucharest 2026","dates":"~24–31 октября","location":"Бухарест, Румыния","prize":"TBC","teams":16,"status":"⏳ Скоро","url":"https://pgl.gg"},
+  {"name":"IEM Beijing 2026","dates":"~2–8 ноября","location":"Пекин, Китай","prize":"TBC","teams":16,"status":"⏳ Скоро","url":"https://intel.com/iem"},
+  {"name":"BLAST Rivals Fall 2026","dates":"~9–15 ноября","location":"Гонконг","prize":"TBC","teams":16,"status":"⏳ Скоро","url":"https://blast.tv"},
+  {"name":"PGL Major Singapore 2026","dates":"25 ноября – 13 декабря","location":"Сингапур","prize":"$1,250,000","teams":32,"status":"✅ Подтверждён","url":"https://pgl.gg"}
+];
+
+// ===== РЕНДЕР =====
+function renderRankingRow(item, isHeader) {
+  if (isHeader) {
+    return '<div class="ranking-row header"><div>#</div><div>Команда</div><div style="text-align:right">Очки</div><div style="text-align:right">Изм.</div></div>';
+  }
+  var changeIcon = item.change > 0 ? '↑' : item.change < 0 ? '↓' : '—';
+  var changeClass = item.change > 0 ? 'up' : item.change < 0 ? 'down' : 'same';
+  var changeText = item.change !== 0 ? Math.abs(item.change) : '';
+  var regionBadge = item.region ? '<span class="rank-region region-' + item.region.toLowerCase() + '">' + item.region + '</span>' : '';
+  var players = item.players ? '<div class="players">' + item.players.join(', ') + '</div>' : '';
+  return '<div class="ranking-row"><div class="rank-num">' + item.rank + '</div><div class="rank-team">' + item.team + regionBadge + players + '</div><div class="rank-points">' + item.points + '</div><div class="rank-change ' + changeClass + '">' + changeIcon + changeText + '</div></div>';
 }
 
-// ============ РЕНДЕР ТУРНИРОВ ============
-function renderTournament(t, compact = false) {
-    const statusClass = t.status.includes('Идёт') ? 'status-live' : t.status.includes('Скоро') ? 'status-soon' : 'status-confirmed';
-    if (compact) {
-        return `
-            <a href="${t.url}" target="_blank" class="tournament-card">
-                <div>
-                    <div class="name">${t.name}</div>
-                    <div class="meta">
-                        <span>📅 ${t.dates}</span>
-                        <span>📍 ${t.location}</span>
-                    </div>
-                    <div class="prize">${t.prize}</div>
-                </div>
-                <div class="status ${statusClass}">${t.status}</div>
-            </a>
-        `;
-    }
-    return `
-        <a href="${t.url}" target="_blank" class="tournament-card">
-            <div>
-                <div class="name">${t.name}</div>
-                <div class="meta">
-                    <span>📅 ${t.dates}</span>
-                    <span>📍 ${t.location}</span>
-                    <span>👥 ${t.teams} команд</span>
-                </div>
-                <div class="prize">Призовой фонд: ${t.prize}</div>
-            </div>
-            <div class="status ${statusClass}">${t.status}</div>
-        </a>
-    `;
+function renderTournament(t, compact) {
+  var statusClass = t.status.indexOf('Идёт') !== -1 ? 'status-live' : t.status.indexOf('Скоро') !== -1 ? 'status-soon' : 'status-confirmed';
+  var meta = compact ? '<span>📅 ' + t.dates + '</span><span>📍 ' + t.location + '</span>' : '<span>📅 ' + t.dates + '</span><span>📍 ' + t.location + '</span><span>👥 ' + t.teams + ' команд</span>';
+  var prize = compact ? '<div class="prize">' + t.prize + '</div>' : '<div class="prize">Призовой фонд: ' + t.prize + '</div>';
+  return '<a href="' + t.url + '" target="_blank" class="tournament-card"><div><div class="name">' + t.name + '</div><div class="meta">' + meta + '</div>' + prize + '</div><div class="status ' + statusClass + '">' + t.status + '</div></a>';
 }
 
-// ============ РЕНДЕР НОВОСТЕЙ ============
 function renderNewsCard(n) {
-    const badge = n.isPatch ? 'badge-patch' : 'badge-news';
-    const label = n.isPatch ? 'Патч' : 'Новость';
-    return `
-        <a href="${n.url}" target="_blank" class="news-card">
-            <span class="badge ${badge}">${label}</span>
-            <h3>${escapeHtml(n.title)}</h3>
-            <div class="meta">
-                <span>📅 ${n.date}</span>
-                <span>🕐 ${n.time}</span>
-                <span>✍️ ${escapeHtml(n.author)}</span>
-            </div>
-            <div class="desc">${escapeHtml(n.content)}</div>
-        </a>
-    `;
+  var badge = n.isPatch ? 'badge-patch' : 'badge-news';
+  var label = n.isPatch ? 'Патч' : 'Новость';
+  return '<a href="' + n.url + '" target="_blank" class="news-card"><span class="badge ' + badge + '">' + label + '</span><h3>' + escapeHtml(n.title) + '</h3><div class="meta">📅 ' + n.date + ' 🕐 ' + n.time + ' ✍️ ' + escapeHtml(n.author) + '</div><div class="desc">' + escapeHtml(n.content) + '</div></a>';
 }
 
-// ============ РЕНДЕР МАТЧЕЙ ============
 function renderMatchRow(m) {
-    const t1Win = m.winner === m.team1 ? 'winner' : '';
-    const t2Win = m.winner === m.team2 ? 'winner' : '';
-    return `
-        <a href="${m.url}" target="_blank" class="match-row">
-            <div class="team ${t1Win}" style="text-align:right;">
-                ${escapeHtml(m.team1)}
-                <div class="maps">${escapeHtml(m.maps)}</div>
-            </div>
-            <div>
-                <div class="vs">${m.score1}:${m.score2}</div>
-                <div class="event">${escapeHtml(m.event)} • ${m.date}</div>
-            </div>
-            <div class="team ${t2Win}">${escapeHtml(m.team2)}</div>
-        </a>
-    `;
+  var t1Win = m.winner === m.team1 ? 'winner' : '';
+  var t2Win = m.winner === m.team2 ? 'winner' : '';
+  return '<a href="' + m.url + '" target="_blank" class="match-row"><div class="team ' + t1Win + '" style="text-align:right">' + escapeHtml(m.team1) + '<div class="maps">' + escapeHtml(m.maps) + '</div></div><div><div class="vs">' + m.score1 + ':' + m.score2 + '</div><div class="event">' + escapeHtml(m.event) + ' • ' + m.date + '</div></div><div class="team ' + t2Win + '">' + escapeHtml(m.team2) + '</div></a>';
 }
 
 function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+  var div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
-// ============ ВКЛАДКИ ============
 function showTab(name) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('nav a').forEach(el => el.classList.remove('active'));
-    document.getElementById('content-' + name).classList.add('active');
-    document.getElementById('tab-' + name).classList.add('active');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  var tabs = document.querySelectorAll('.tab-content');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+  var navs = document.querySelectorAll('nav a');
+  for (var i = 0; i < navs.length; i++) navs[i].classList.remove('active');
+  document.getElementById('content-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
-// ============ ЗАГРУЗКА ВСЕГО ============
 function loadAll() {
-    // Home HLTV top 5
-    document.getElementById('home-hltv').innerHTML = 
-        renderRankingRow({}, 'hltv', true) + 
-        HLTV_DATA.slice(0, 5).map(x => renderRankingRow(x, 'hltv')).join('');
+  // Home HLTV top 5
+  var hltvHome = renderRankingRow({}, true);
+  for (var i = 0; i < Math.min(5, HLTV_DATA.length); i++) {
+    hltvHome += renderRankingRow(HLTV_DATA[i], false);
+  }
+  document.getElementById('home-hltv').innerHTML = hltvHome;
 
-    // Home VRS top 5
-    document.getElementById('home-vrs').innerHTML = 
-        renderRankingRow({}, 'vrs', true) + 
-        VRS_DATA.slice(0, 5).map(x => renderRankingRow(x, 'vrs')).join('');
+  // Home VRS top 5
+  var vrsHome = renderRankingRow({}, true);
+  for (var i = 0; i < Math.min(5, VRS_DATA.length); i++) {
+    vrsHome += renderRankingRow(VRS_DATA[i], false);
+  }
+  document.getElementById('home-vrs').innerHTML = vrsHome;
 
-    // Home matches
-    const homeMatches = document.getElementById('home-matches');
-    homeMatches.innerHTML = MATCHES_DATA.slice(0, 4).map(renderMatchRow).join('') 
-        || '<div class="empty-state"><span class="emoji">😴</span>Нет матчей</div>';
+  // Home matches
+  var homeMatches = '';
+  for (var i = 0; i < Math.min(4, MATCHES_DATA.length); i++) {
+    homeMatches += renderMatchRow(MATCHES_DATA[i]);
+  }
+  document.getElementById('home-matches').innerHTML = homeMatches || '<div class="empty-state"><span class="emoji">😴</span>Нет матчей</div>';
 
-    // Home tournaments
-    const homeTours = document.getElementById('home-tournaments');
-    homeTours.innerHTML = TOURNAMENTS_DATA.slice(0, 3).map(t => renderTournament(t, true)).join('')
-        || '<div class="empty-state"><span class="emoji">😴</span>Нет турниров</div>';
+  // Home tournaments
+  var homeTours = '';
+  for (var i = 0; i < Math.min(3, TOURNAMENTS_DATA.length); i++) {
+    homeTours += renderTournament(TOURNAMENTS_DATA[i], true);
+  }
+  document.getElementById('home-tournaments').innerHTML = homeTours || '<div class="empty-state"><span class="emoji">😴</span>Нет турниров</div>';
 
-    // All HLTV
-    document.getElementById('all-hltv').innerHTML = 
-        renderRankingRow({}, 'hltv', true) + 
-        HLTV_DATA.map(x => renderRankingRow(x, 'hltv')).join('');
+  // All HLTV
+  var allHltv = renderRankingRow({}, true);
+  for (var i = 0; i < HLTV_DATA.length; i++) {
+    allHltv += renderRankingRow(HLTV_DATA[i], false);
+  }
+  document.getElementById('all-hltv').innerHTML = allHltv;
 
-    // All VRS
-    document.getElementById('all-vrs').innerHTML = 
-        renderRankingRow({}, 'vrs', true) + 
-        VRS_DATA.map(x => renderRankingRow(x, 'vrs')).join('');
+  // All VRS
+  var allVrs = renderRankingRow({}, true);
+  for (var i = 0; i < VRS_DATA.length; i++) {
+    allVrs += renderRankingRow(VRS_DATA[i], false);
+  }
+  document.getElementById('all-vrs').innerHTML = allVrs;
 
-    // All tournaments
-    document.getElementById('all-tournaments').innerHTML = 
-        TOURNAMENTS_DATA.map(t => renderTournament(t)).join('')
-        || '<div class="empty-state"><span class="emoji">😴</span>Нет турниров</div>';
+  // All tournaments
+  var allTours = '';
+  for (var i = 0; i < TOURNAMENTS_DATA.length; i++) {
+    allTours += renderTournament(TOURNAMENTS_DATA[i], false);
+  }
+  document.getElementById('all-tournaments').innerHTML = allTours;
 
-    // All matches
-    document.getElementById('all-matches').innerHTML = 
-        MATCHES_DATA.map(renderMatchRow).join('')
-        || '<div class="empty-state"><span class="emoji">😴</span>Нет матчей</div>';
+  // All matches
+  var allMatches = '';
+  for (var i = 0; i < MATCHES_DATA.length; i++) {
+    allMatches += renderMatchRow(MATCHES_DATA[i]);
+  }
+  document.getElementById('all-matches').innerHTML = allMatches || '<div class="empty-state"><span class="emoji">😴</span>Нет матчей</div>';
 
-    // All news
-    document.getElementById('all-news').innerHTML = 
-        NEWS_DATA.map(renderNewsCard).join('')
-        || '<div class="empty-state"><span class="emoji">😴</span>Нет новостей</div>';
+  // All news
+  var allNews = '';
+  for (var i = 0; i < NEWS_DATA.length; i++) {
+    allNews += renderNewsCard(NEWS_DATA[i]);
+  }
+  document.getElementById('all-news').innerHTML = allNews || '<div class="empty-state"><span class="emoji">😴</span>Нет новостей</div>';
 }
 
 loadAll();
